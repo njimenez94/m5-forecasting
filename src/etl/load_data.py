@@ -1,6 +1,6 @@
 from pathlib import Path
 import pandas as pd
-from src.utils.config import (
+from settings.config import (
     SALES_TRAIN_VALIDATION_FILE,
     CALENDAR_FILE,
     SELL_PRICES_FILE

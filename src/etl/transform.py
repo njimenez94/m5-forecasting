@@ -2,7 +2,7 @@ import pandas as pd
 
 def long_format_transform(df: pd.DataFrame) -> pd.DataFrame:
     df_long = df.melt(
-        id_vars=['id', 'item_id', 'dept_id', 'cat_id', 'store_id', 'state_id'],
+        id_vars=['state_id', 'store_id', 'dept_id', 'cat_id','id', 'item_id'],
         var_name='d',
         value_name='sales'
     )
@@ -26,8 +26,8 @@ def transform_sales_train_validation(df: pd.DataFrame) -> pd.DataFrame:
     - Transformed DataFrame
     """
     df = long_format_transform(df)
-    cols_to_category = ['dept_id', 'cat_id', 'store_id', 'state_id']
-    df = convert_columns_to_category(df, cols_to_category)
+    
+    df = convert_columns_to_category(df, ['dept_id', 'cat_id', 'store_id', 'state_id'])
 
     df['sales'] = df['sales'].astype('int16')
     
