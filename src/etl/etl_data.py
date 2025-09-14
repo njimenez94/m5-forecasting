@@ -32,7 +32,7 @@ def etl_data(sales_file, output_file):
     logging.info("Selecting columns")
     sales_data = sales_data.select([
            "id", "state_id", "store_id", "cat_id", "dept_id", "item_id", 
-           "date", "year", "month", "week", "wday", "mday", "sell_price", "sales"
+           "date", "year", "quarter", "month", "week", "wday", "mday", "sell_price", "sales"
        ])
     
     logging.info("Saving data")

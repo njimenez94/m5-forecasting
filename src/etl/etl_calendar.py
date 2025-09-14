@@ -20,9 +20,10 @@ def load_calendar(input_file = "data/raw/calendar.csv"):
            pl.col("date").dt.week().cast(pl.UInt8).alias("week"),
            pl.col("date").dt.day().cast(pl.UInt8).alias("mday"),
            pl.col("date").dt.month().cast(pl.UInt8).alias("month"),
+           pl.col("date").dt.quarter().cast(pl.UInt8).alias("quarter"),
            pl.col("date").dt.year().cast(pl.UInt16).alias("year"),
        ])
-       .select(['d', 'wm_yr_wk', 'date', 'year', 'month', 'week', 'wday', 'mday'])
+       .select(['d', 'wm_yr_wk', 'date', 'year', 'month','quarter', 'week', 'wday', 'mday'])
    )
 
    return calendar
