@@ -2,57 +2,74 @@
 
 **Author:** Nicolás Jiménez Díaz
 
-## Executive Summary
+![Total Sales Pattern](bajada_titulo.png)  
+<p align="center"><em>Image generated with AI</em></p>
 
-- **This is not synthetic data—it’s real.** The analysis comes from a validation subset of the public **M5 Forecasting competition dataset**, covering Q2-2015 (91 days, 3,049 items across 10 stores).  
+Uno de los principales desafíos que enfrentan actualmente los negocios de ventas minoristas es la posibilidad de anticipar el volumen de unidades que se espera vender de cada ítem en cada tienda. Esto se debe a que, en la práctica, la unidad mínima de transacción en el mundo real es el ítem individual, no una categoría agregada de productos. Cada ítem puede presentar un comportamiento completamente distinto según la ubicación de la tienda, ya que cada una responde a realidades contextuales muy diferentes. En muchos casos, se observa una alta cantidad de periodos sin venta, y cuando esta ocurre, suele limitarse a entre 1 y 2 unidades, como veremos más adelante en este artículo.
 
-- **Most demand is not smooth, it’s choppy.** Within this real dataset, 71% of item–store combinations behave intermittently, selling about 1.6 units every four days. This isn’t noise—it’s the dominant reality that replenishment systems must handle.  
+Si bien es posible trabajar con datos agregados para facilitar el análisis y organización de la información, inevitablemente se debe descender hasta este nivel tan atómico de las transacciones, de una forma u otra.
 
-- **Before chasing models, label the demand.** Many teams rush to advanced forecasting methods, but the first step is to understand the demand pattern itself. ADI and CV² give us a simple yet powerful lens to do that.  
+El problema principal radica en que, a este nivel de transacción, los patrones de comportamiento difieren significativamente de los observables en datos agregados, donde es más sencillo identificar tendencias. Al descender al nivel más atómico de la venta, el panorama se vuelve caótico; en una primera impresión, parece gobernado por el azar. De hecho, en la competencia M5 se evidencia que este es el nivel en el que se presenta el mayor margen de error al intentar predecir el comportamiento de ventas, particularmente en series de demanda intermitente y ruidosa, tal como lo detallan Makridakis, Spiliotis y Assimakopoulos (2022) en su análisis de los resultados de la competencia.
 
-- **Not all demand is created equal.** Four distinct behaviors emerge:  
-  - *Smooth*: steady and predictable.  
-  - *Intermittent*: sparse but consistent when it appears.  
-  - *Erratic*: frequent but volatile.  
-  - *Lumpy*: rare, irregular, and large when it hits.  
+![alt text](image-1.png)
+<p align="center"><em>Tabla reproducida de “M5 Accuracy competition: Results, findings, and conclusions”, Spyros Makridakis, Evangelos Spiliotis, Vassilios Assimakopoulos, International Journal of Forecasting, 2022. Licencia CC BY‑NC‑ND 4.0.
+</em></p>
+En el siguiente artículo, nos adentraremos en la comprensión y estructuración de este caos. A lo largo de los años, diversos investigadores han explorado este fenómeno, proporcionándonos indicadores sumamente útiles y métricas claras para clasificar los distintos tipos de comportamiento. Esto nos permitirá entender los desafíos asociados a cada categoría y analizar cómo se comportan nuestras transacciones a nivel atómico.
 
-- **Some series can’t yet be trusted.** Around 3% of the portfolio lacks enough history to classify reliably. Flagging these as “Insufficient data” prevents weak signals from contaminating the forecast.  
+---
 
-- **The wrong metric can mislead the business.** Popular measures like MAPE collapse when faced with zeros. Pattern-aware evaluation—using WAPE, RMSE, or SPEC—ensures the models we select truly support replenishment decisions instead of just minimizing statistical error.
+## Resumen
 
+En este análisis no trabajaremos con datos sintéticos, sino con información del mundo real. Utilizaremos el conjunto de datos de la [M5 forecasting competition](https://www.kaggle.com/competitions/m5-forecasting-accuracy/data), enfocándonos específicamente en el comportamiento de ventas durante el segundo semestre de 2015. Este periodo incluye 91 días de registro, con 3.049 productos distribuidos en 10 tiendas.
 
-## Why This Matters
+Estudiaremos, según lo planteado por Croston (1972), tanto la ocurrencia de la demanda como el volumen cuando esta se presenta. Los resultados de nuestro subconjunto son contundentes: el 71 % de las demandas se manifiestan de forma altamente intermitente en comparación con los datos agregados, registrando ventas de entre 1 y 2 unidades cada cuatro días. Esto no responde al ruido ni al azar, sino que representa un patrón dominante en la industria, tal como también se observa en análisis recientes sobre la competencia M5 o datos de industrias especificas.
 
-Most companies invest heavily in finding the perfect forecasting method—from statistical models to machine learning and deep learning algorithms. Yet they often overlook a fundamental step: understanding the demand itself.
+Antes de aplicar modelos, necesitamos clasificar y entender el comportamiento de nuestra demanda en el mundo real. Muchos equipos se apresuran a utilizar algortimos avanzados de pronóstico, pero el primer paso es comprender el patrón de la demanda. Indicadores como el ADI y el CV² nos ofrecen una herramienta simple pero poderosa para lograrlo, tal como se expone en el esquema de categorización propuesto por Syntetos, Boylan & Croston (2005) y posteriormente refinado por Kostenko & Hyndman (2006).
 
-You cannot improve what you do not understand. Before running after the perfect algorithm, businesses must face their data directly and classify their demand. This classification becomes the foundation upon which intelligent replenishment systems are built.
+---
 
-The heart of any business lies in its replenishment system. The goal is simple: cover demand effectively without stockouts, but also without excess inventory that becomes obsolete stock and costly liquidations.
+## ¿Por qué la intermitencia de la demanda importa?
 
-## Data & Scope
+Muchos negocios concentran sus esfuerzos en encontrar el algoritmo de predicción ideal, aquel que permita reducir al mínimo los errores de pronóstico. En esta búsqueda, se recurre desde modelos estadísticos tradicionales hasta enfoques más sofisticados como el machine learning y el deep learning, tal como lo demuestran Kiefer, Grimm, Bauer y van Dinther (2020) en su estudio comparativo sobre métodos aplicados a demandas intermitentes e irregulares.
 
-This analysis uses real data from the [M5 forecasting competition](https://www.kaggle.com/competitions/m5-forecasting-accuracy/data), specifically a subset from the validation set covering the second quarter of 2015 (April 1 to June 30)—91 days total.
+Sin embargo, no es posible predecir lo que aún no se comprende. Antes de aspirar a un modelo perfecto, es fundamental entender en profundidad los patrones de comportamiento de la demanda y aceptar la naturaleza que estos presentan. Solo así será posible adaptarse de forma efectiva y reducir los altos niveles de error, los cuales, en el entorno real, se traducen en costos de inventario, liquidaciones forzadas y, lo más crítico, ventas perdidas.
 
-The dataset includes **3,049 items distributed across 10 stores**, providing 2,774,590 daily sales records. This represents a solid foundation for observing real demand behavior across different item-store combinations.
+![alt text](image-4.png)
+<p align="center"><em>Image generated with AI</em></p>
 
-**Daily sales pattern**: Total sales move around an average of 37K units, ranging from 28K to 49K units per day.
+En este contexto, los sistemas y métodos de asignación de mercadería en el punto de venta se consolidan como el núcleo operativo de cualquier negocio. Su objetivo es claro: satisfacer la demanda de manera eficiente, evitando tanto los quiebres de stock como la acumulación de inventario, que puede derivar en obsolescencia y pérdidas económicas por liquidaciones.
+
+---
+
+## Data y alcance del analisis
+
+Para comprender este tema de manera práctica, estudiaremos datos reales provenientes de la [competencia M5 Forecasting](https://www.kaggle.com/competitions/m5-forecasting-accuracy/data). Específicamente, utilizaremos un subconjunto correspondiente al segundo trimestre de 2015 (Q2 2015), que abarca del 1 de abril al 30 de junio, para un total de 91 días.
+
+Nuestro conjunto de datos incluye 3.049 productos distribuidos en 10 sucursales, lo que representa aproximadamente 2,8 millones de registros de comportamiento de demanda.
+
+Como se observa en el siguiente gráfico, las ventas agregadas totales se sitúan en torno a las 37.000 unidades diarias, con un rango que varía entre 28.000 y 49.000 unidades. Se identifican picos marcados que contrastan claramente con los valles en los niveles de venta.
 
 ![Total Sales Pattern](total_sales.png)
 
-**Item-level pattern**: Sales concentrate primarily on 1-2 units, with clear predominance of single-unit sales. Multiple zero-sales periods are observed, evidencing that demand does not manifest continuously. When it occurs, average magnitude remains in the reduced range of 1-2 units.
+Al observar la demanda a un nivel más atómico, se evidencia que las ventas se concentran principalmente en 1 o 2 unidades, con una clara predominancia de ventas de una sola unidad. Se identifican múltiples periodos con ventas nulas, lo que demuestra que la demanda no se manifiesta de forma continua. Cuando se presenta, su magnitud promedio se mantiene dentro de un rango reducido.
 
 ![Item-Level Sales Distribution](item_sales.png)
 
-This pattern corresponds to **intermittent demand**, first described by John Croston in his seminal 1972 work "Forecasting and Stock Control for Intermittent Demands."
+Este patrón corresponde a una demanda intermitente, descrita por primera vez por John Croston en su obra seminal de 1972, "Forecasting and Stock Control for Intermittent Demands."
 
-## Method
+---
+## Metodologia
 
-### Sales summary agregation
+### a) Resumen de estadisticas de ventas a nivel item-store
 
-**Technical Note**: For large-scale analysis, we used DuckDB to efficiently query the multi-million record dataset without loading everything into memory. This approach scales seamlessly when processing entire years of data across thousands of items and locations:
+**Nota técnica:** Para el análisis a gran escala, utilizamos DuckDB, lo que nos permitió consultar eficientemente un conjunto de datos con millones de registros sin necesidad de cargarlo completamente en memoria. Este enfoque permite escalar de manera fluida al procesar datos de años completos que abarcan miles de productos y tiendas.
 
 ```python
-# Efficient large-scale querying with DuckDB
+import pandas as pd
+import duckdb as ddb
+
+con = ddb.connect()
+
 query = """
 SELECT
   id, item_id, store_id,
@@ -74,24 +91,93 @@ HAVING SUM(CASE WHEN sales > 0 THEN 1 ELSE 0 END) > 0
 demand_summary = con.query(query).to_df()
 ```
 
-### Classification Framework
+|   | id                           | item_id    | store_id | first_sale_date | last_sale_date | sales_window_days | selling_days | avg_sales | std_sales |
+|---|------------------------------|------------|----------|-----------------|----------------|-------------------|--------------|-----------|-----------|
+| 0 | FOODS_1_001_CA_1_validation  | FOODS_1_001 | CA_1    | 2015-04-02      | 2015-06-27     | 86                | 35           | 1.600     | 0.868     |
+| 1 | FOODS_1_001_CA_2_validation  | FOODS_1_001 | CA_2    | 2015-04-02      | 2015-06-29     | 88                | 31           | 2.194     | 1.874     |
+| 2 | FOODS_1_001_CA_3_validation  | FOODS_1_001 | CA_3    | 2015-04-04      | 2015-06-30     | 87                | 28           | 2.464     | 3.300     |
+| 3 | FOODS_1_001_CA_4_validation  | FOODS_1_001 | CA_4    | 2015-04-08      | 2015-06-26     | 79                | 21           | 1.238     | 0.426     |
+| 4 | FOODS_1_001_TX_1_validation  | FOODS_1_001 | TX_1    | 2015-04-04      | 2015-06-30     | 87                | 28           | 1.321     | 0.710     |
+| 5 | FOODS_1_001_TX_2_validation  | FOODS_1_001 | TX_2    | 2015-04-02      | 2015-06-15     | 74                | 27           | 1.370     | 0.554     |
+| 6 | FOODS_1_001_TX_3_validation  | FOODS_1_001 | TX_3    | 2015-04-01      | 2015-06-27     | 87                | 26           | 2.000     | 1.359     |
+| 7 | FOODS_1_001_WI_1_validation  | FOODS_1_001 | WI_1    | 2015-04-04      | 2015-06-28     | 85                | 26           | 1.192     | 0.482     |
+| 8 | FOODS_1_001_WI_2_validation  | FOODS_1_001 | WI_2    | 2015-04-01      | 2015-06-30     | 90                | 29           | 1.241     | 0.677     |
+| 9 | FOODS_1_001_WI_3_validation  | FOODS_1_001 | WI_3    | 2015-04-02      | 2015-06-24     | 83                | 12           | 1.167     | 0.553     |
 
-In 2005, Syntetos and Boylan deepened the study of intermittent demand and proposed an approach that originated demand pattern classification. This framework uses two key metrics:
+---
+### b) Proceso de clasificacion
 
-**ADI (Average Demand Interval)**: `sales_window_days / selling_days`
-- Measures the average time between sales occurrences
-- Higher values indicate more sporadic demand
+#### Metricas para clasificar demanda
 
-**CV² (Squared Coefficient of Variation)**: `(std_sales / avg_sales)²`
-- Measures demand size variability when sales occur
-- Higher values indicate more volatile demand quantities
+#####  1) ADI (Average Demand Interval)
 
-### Classification Rules (Syntetos & Boylan, 2005)
+**Fórmula original (literatura):**
 
-- **Smooth**: ADI < 1.32 and CV² < 0.49 (frequent, stable)
-- **Intermittent**: ADI ≥ 1.32 and CV² < 0.49 (sporadic, stable)  
-- **Erratic**: ADI < 1.32 and CV² ≥ 0.49 (frequent, volatile)
-- **Lumpy**: ADI ≥ 1.32 and CV² ≥ 0.49 (sporadic, volatile)
+\[
+ADI = \frac{\text{Number of Periods}}{\text{Number of Periods with Demand}}
+\]
+
+
+**Fórmula en nuestro análisis (adaptación operativa):**
+
+\[
+ADI = \frac{\text{sales\_window\_days}}{\text{selling\_days}}
+\]
+
+***Donde:***
+  - **sales_window_days**: días transcurridos entre la primera y la última venta registrada.  
+  - **selling_days**: número de días con ventas mayores a cero.  
+
+**Interpretación:** mide el intervalo promedio (en días) entre ocurrencias de ventas positivas.
+
+  - ***ADI bajo*** → demanda frecuente (más cercana a continua).  
+  - **ADI alto** → demanda dispersa (más intermitente).  
+
+**Implementación en código:**
+
+```python
+demand_summary["ADI"] = (
+    demand_summary["sales_window_days"] / demand_summary["selling_days"]
+)
+```
+
+---
+
+##### 2) CV² (Coeficiente de variación al cuadrado)
+
+\[
+CV^2 = \left(\frac{\sigma}{\mu}\right)^2
+\]
+
+***Donde:***
+
+  - $\sigma$ = desviación estándar de las cantidades vendidas (*solo considerando ventas > 0*).  
+  - $\mu$ = media de las cantidades vendidas (*solo considerando ventas > 0*).  
+
+**Interpretación:** CV² captura la *volatilidad de las cantidades vendidas* cuando ocurre la demanda.  
+
+- ***CV² bajo*** → unidades de venta estables.  
+- ***CV² alto*** → unidades de venta altamente variables.  
+
+**Implementación en código:**
+
+```python
+demand_summary["CV2"] = (
+    (demand_summary["std_sales"] / demand_summary["avg_sales"]) ** 2
+)
+```
+
+---
+
+#### Reglas de Clasificación (Syntetos & Boylan, 2005)
+
+- **Suave (Smooth)**: ADI < 1.32 y CV² < 0.49 (frecuente, estable)  
+- **Intermitente (Intermittent)**: ADI ≥ 1.32 y CV² < 0.49 (esporádica, estable)  
+- **Errática (Erratic)**: ADI < 1.32 y CV² ≥ 0.49 (frecuente, volátil)  
+- **Irregular / Lumpy (Lumpy)**: ADI ≥ 1.32 y CV² ≥ 0.49 (esporádica, volátil)  
+
+
+**Implementación en código:**
 
 ```python
 def classify_demand(df):
@@ -113,6 +199,8 @@ def classify_demand(df):
     df["ADI"] = (df["sales_window_days"] / df["selling_days"]).round(3)
     df["CV2"] = ((df["std_sales"] / df["avg_sales"]) ** 2).round(3)
 
+     # * Round 3 decimal for memory when we have millions time series
+
     # Classification rules
     conditions = [
         (df["ADI"] < ADI_THR) & (df["CV2"] < CV2_THR),   # Smooth
@@ -128,9 +216,12 @@ def classify_demand(df):
     return df
 ```
 
-### Insufficient Data Handling
+---
+#### Manejo de datos insuficientes
 
-Items with sales windows shorter than 20% of the maximum observed window are tagged as "Insufficient data" to avoid unreliable classifications.
+Los ítems con ventanas de ventas **menores al 20 % de la ventana máxima observada** se etiquetan como ***"Insufficient data"***, con el fin de evitar clasificaciones poco representativas.
+
+**Implementación en código:**
 
 ```python    
 def tag_insufficient_data(df, ratio=0.2):
@@ -152,19 +243,20 @@ def tag_insufficient_data(df, ratio=0.2):
     return df
 ```
 
-## Findings
+---
+## Hallazgos
 
-### a) General Statistics
+### a) Estadisticas generales
 
 **Intermittent demand dominates**: 71% of item-store combinations exhibit intermittent patterns, selling an average of 1.6 units every 4 days during the analyzed period.
 
 ![Distribution of Demand Patterns](distribution_demand_patterns.png)
 
 The remaining portfolio distributes as follows:
-- Insufficient data: 12%
-- Smooth: 8%
-- Erratic: 6%
-- Lumpy: 3%
+- Smooth: 14%
+- Lumpy: 9%
+- Erratic: 3%
+- Insufficient data: 3%
 
 **Key portfolio metrics**:
 
@@ -234,7 +326,13 @@ This demand classification analysis establishes the groundwork for intelligent f
 
 ## References
 
-Croston, J. D. (1972). Forecasting and stock control for intermittent demands. *Operational Research Quarterly*, 23(3), 289-303.
+**Croston, J. D.** (1972). Forecasting and stock control for intermittent demands. *Operational Research Quarterly*, 23(3), 289-303.
+
+**Makridakis, S., Spiliotis, E., & Assimakopoulos, V.** (2022). *M5 Accuracy Competition: Results, Findings, and Conclusions*. *International Journal of Forecasting*.
+
+**Syntetos, A. A., Boylan, J. E., & Croston, J. D.** (2005). On the categorization of demand patterns. Journal of the Operational Research Society, 56(5), 495–503.
+
+**Kiefer, D., Grimm, F., Bauer, M., & van Dinther, C.** (2020). Demand Forecasting Intermittent and Lumpy Time Series: Comparing Statistical, Machine Learning and Deep Learning Methods. Proceedings of the 53rd Hawaii International Conference on System Sciences. 
 
 Kolassa, S. (2016). Evaluating predictive count data distributions in retail sales forecasting. *International Journal of Forecasting*, 32(3), 788-803.
 

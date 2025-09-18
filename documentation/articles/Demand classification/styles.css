@@ -1,0 +1,58 @@
+/* --- Global text --- */
+body {
+  font-family: "Segoe UI", "Helvetica", "Arial", sans-serif;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* --- Headings --- */
+h1, h2, h3 {
+  color: #2E86C1;
+  font-weight: bold;
+  margin-top: 24px;
+  margin-bottom: 12px;
+}
+
+/* --- Tables --- */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 16px 0;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+}
+
+th {
+  background-color: #f2f2f2;
+  color: #2E86C1;
+  text-align: left;
+}
+
+/* --- Code blocks --- */
+pre code {
+  display: block;
+  background-color: #F4F6F6;
+  color: #C0392B;
+  padding: 10px;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 0.9em;
+}
+
+code {
+  background-color: #F4F6F6;
+  color: #C0392B;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+/* --- Images --- */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 12px auto;
+}
