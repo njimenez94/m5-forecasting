@@ -1,68 +1,97 @@
-# Demand Classification: The Hidden Key to Smart Replenishment
+# Clasificación de demanda: La clave silencisa para modelos de forecasting
+---
+**Autor:** Nicolás Jiménez Díaz
 
-**Author:** Nicolás Jiménez Díaz
-
-![Total Sales Pattern](bajada_titulo.png)  
+![alt text](image-9.png)
 <p align="center"><em>Image generated with AI</em></p>
 
-Uno de los principales desafíos que enfrentan actualmente los negocios de ventas minoristas es la posibilidad de anticipar el volumen de unidades que se espera vender de cada ítem en cada tienda. Esto se debe a que, en la práctica, la unidad mínima de transacción en el mundo real es el ítem individual, no una categoría agregada de productos. Cada ítem puede presentar un comportamiento completamente distinto según la ubicación de la tienda, ya que cada una responde a realidades contextuales muy diferentes. En muchos casos, se observa una alta cantidad de periodos sin venta, y cuando esta ocurre, suele limitarse a entre 1 y 2 unidades, como veremos más adelante en este artículo.
+---
 
-Si bien es posible trabajar con datos agregados para facilitar el análisis y organización de la información, inevitablemente se debe descender hasta este nivel tan atómico de las transacciones, de una forma u otra.
+Uno de los grandes retos del retail actual es predecir cuántas unidades de un producto se venderán en cada una de sus tiendas durante un periodo específico. Este desafío es fundamental, ya que de su resolución dependen múltiples procesos clave: la proyección de la demanda, la planificación de presupuestos, la definición de estrategias de precios, la gestión de reposiciones y muchas otras decisiones operativas. Al final del día, la venta es el núcleo que sostiene toda la operación.
 
-El problema principal radica en que, a este nivel de transacción, los patrones de comportamiento difieren significativamente de los observables en datos agregados, donde es más sencillo identificar tendencias. Al descender al nivel más atómico de la venta, el panorama se vuelve caótico; en una primera impresión, parece gobernado por el azar. De hecho, en la competencia M5 se evidencia que este es el nivel en el que se presenta el mayor margen de error al intentar predecir el comportamiento de ventas, particularmente en series de demanda intermitente y ruidosa, tal como lo detallan Makridakis, Spiliotis y Assimakopoulos (2022) en su análisis de los resultados de la competencia.
+*El desafío*
+---
+
+Aunque los análisis suelen realizarse a nivel agregado (categorías, sucursales, líneas de producto, entre otros), la realidad es que la transacción ocurre en su nivel más básico: el ítem individual dentro de una sucursal en particular.
+
+En este nivel atómico —la mínima unidad de desagregación— tanto las entradas de inventario (reposiciones) como las salidas (ventas) se fragmentan en microtransacciones. Y es ahí donde surge la verdadera complejidad: un mismo producto puede mostrar un comportamiento completamente distinto según el punto de venta en el que se ofrezca, ya que cada tienda responde a condiciones contextuales únicas.
+
+La clave está en anticiparse a esos comportamientos heterogéneos: reconocerlos, modelarlos y gestionarlos de manera diferenciada es lo que permite alcanzar la eficacia operativa.
+
+*La realidad*
+---
+
+Al descender hasta este nivel atómico de la demanda, lo que emerge son series de ventas discontinuas: largos intervalos sin movimiento y, cuando la demanda finalmente aparece, concentraciones mínimas de apenas 1 o 2 unidades.
+
+Analizar datos agregados puede dar la ilusión de simplicidad, pero tarde o temprano es necesario llegar a esta capa granular. Y es en ese punto donde las aparentes regularidades se desvanecen: lo que en lo agregado parecía una tendencia estable se revela, en la base, como un mosaico irregular que a primera vista parece obedecer al azar.
+
+*La evidencia*
+---
+
+Esto no es una exageración: la competencia M5 demostró que es precisamente en este nivel donde se concentran los mayores errores de predicción, en especial cuando se trata de series intermitentes y ruidosas (Makridakis, Spiliotis y Assimakopoulos, 2022).
 
 ![alt text](image-1.png)
-<p align="center"><em>Tabla reproducida de “M5 Accuracy competition: Results, findings, and conclusions”, Spyros Makridakis, Evangelos Spiliotis, Vassilios Assimakopoulos, International Journal of Forecasting, 2022. Licencia CC BY‑NC‑ND 4.0.
+<p align="center"><em>M5 Accuracy competition: Results, findings, and conclusions (Spyros Makridakis, Evangelos Spiliotis, Vassilios Assimakopoulos, International Journal of Forecasting, 2022)
 </em></p>
-En el siguiente artículo, nos adentraremos en la comprensión y estructuración de este caos. A lo largo de los años, diversos investigadores han explorado este fenómeno, proporcionándonos indicadores sumamente útiles y métricas claras para clasificar los distintos tipos de comportamiento. Esto nos permitirá entender los desafíos asociados a cada categoría y analizar cómo se comportan nuestras transacciones a nivel atómico.
+
+En este artículo nos adentraremos en cómo dar forma a ese aparente caos. A lo largo de las últimas décadas, la investigación en forecasting ha generado indicadores y métricas que permiten clasificar los distintos tipos de demanda. Comprender estas categorías es el primer paso para enfrentar sus desafíos y, sobre todo, para revelar la clave oculta que hace posible construir sistemas de reposición realmente inteligentes.
 
 ---
 
 ## Resumen
 
-En este análisis no trabajaremos con datos sintéticos, sino con información del mundo real. Utilizaremos el conjunto de datos de la [M5 forecasting competition](https://www.kaggle.com/competitions/m5-forecasting-accuracy/data), enfocándonos específicamente en el comportamiento de ventas durante el segundo semestre de 2015. Este periodo incluye 91 días de registro, con 3.049 productos distribuidos en 10 tiendas.
+Este análisis no se basa en datos sintéticos, sino en información real. Para ello utilizamos el conjunto de datos de la [M5 Forecasting Competition](https://www.kaggle.com/competitions/m5-forecasting-accuracy/data), enfocándonos en el ***segundo trimestre de 2015 (Q2 2015)***. El periodo abarca ***91 días de registro***, con ***3.049 productos*** distribuidos en ***10 tiendas***.
 
-Estudiaremos, según lo planteado por Croston (1972), tanto la ocurrencia de la demanda como el volumen cuando esta se presenta. Los resultados de nuestro subconjunto son contundentes: el 71 % de las demandas se manifiestan de forma altamente intermitente en comparación con los datos agregados, registrando ventas de entre 1 y 2 unidades cada cuatro días. Esto no responde al ruido ni al azar, sino que representa un patrón dominante en la industria, tal como también se observa en análisis recientes sobre la competencia M5 o datos de industrias especificas.
+Siguiendo lo planteado por Croston (1972), examinamos tanto la ocurrencia de la demanda como el volumen cuando esta se presenta. Los hallazgos son contundentes: ***el 73 % de las series exhiben un comportamiento altamente intermitente, con ventas concentradas en apenas 1 o 2 unidades, distribuidas en solo 30 del total de 91 días observados***. Este fenómeno no corresponde a ruido aleatorio, sino a una dinámica estructural del retail, confirmada tanto por la literatura como por la evidencia empírica de la competencia M5.
 
-Antes de aplicar modelos, necesitamos clasificar y entender el comportamiento de nuestra demanda en el mundo real. Muchos equipos se apresuran a utilizar algortimos avanzados de pronóstico, pero el primer paso es comprender el patrón de la demanda. Indicadores como el ADI y el CV² nos ofrecen una herramienta simple pero poderosa para lograrlo, tal como se expone en el esquema de categorización propuesto por Syntetos, Boylan & Croston (2005) y posteriormente refinado por Kostenko & Hyndman (2006).
+Antes de aplicar modelos de predicción avanzados, resulta esencial clasificar y comprender la naturaleza de la demanda. Muchos equipos se apresuran a probar algoritmos sofisticados, pero sin esta base conceptual, los errores se multiplican. ***Métricas como el ADI y el CV² ofrecen una forma simple y poderosa de caracterizar los patrones, diferenciando entre demandas esporádicas y estables***. Este enfoque —propuesto inicialmente por Syntetos, Boylan & Croston (2005) y refinado por Kostenko & Hyndman (2006)— constituye el punto de partida para construir sistemas de forecast realmente efectivos.
 
 ---
 
-## ¿Por qué la intermitencia de la demanda importa?
+## Clasificación de la demanda: poner orden en el caos
 
-Muchos negocios concentran sus esfuerzos en encontrar el algoritmo de predicción ideal, aquel que permita reducir al mínimo los errores de pronóstico. En esta búsqueda, se recurre desde modelos estadísticos tradicionales hasta enfoques más sofisticados como el machine learning y el deep learning, tal como lo demuestran Kiefer, Grimm, Bauer y van Dinther (2020) en su estudio comparativo sobre métodos aplicados a demandas intermitentes e irregulares.
-
-Sin embargo, no es posible predecir lo que aún no se comprende. Antes de aspirar a un modelo perfecto, es fundamental entender en profundidad los patrones de comportamiento de la demanda y aceptar la naturaleza que estos presentan. Solo así será posible adaptarse de forma efectiva y reducir los altos niveles de error, los cuales, en el entorno real, se traducen en costos de inventario, liquidaciones forzadas y, lo más crítico, ventas perdidas.
+Sin embargo, no es posible predecir lo que aún no se comprende. Antes de aspirar a un modelo perfecto, es fundamental entender en profundidad los patrones de comportamiento de la demanda y aceptar la naturaleza que estos presentan. Solo así será posible adaptarse de forma efectiva y reducir los altos niveles de error, los cuales, para el negocio, se traducen en costos de inventario, liquidaciones forzadas y, lo más crítico, ventas perdidas.
 
 ![alt text](image-4.png)
 <p align="center"><em>Image generated with AI</em></p>
 
-En este contexto, los sistemas y métodos de asignación de mercadería en el punto de venta se consolidan como el núcleo operativo de cualquier negocio. Su objetivo es claro: satisfacer la demanda de manera eficiente, evitando tanto los quiebres de stock como la acumulación de inventario, que puede derivar en obsolescencia y pérdidas económicas por liquidaciones.
+Comprender estos patrones no es un fin en sí mismo: es la base sobre la cual se construyen los sistemas de asignación de mercadería en el punto de venta. Dichos sistemas constituyen el núcleo operativo de cualquier negocio, ya que su objetivo es claro: **satisfacer la demanda de manera eficiente, evitando tanto los quiebres de stock como la acumulación de inventario**, que a la larga deriva en obsolescencia y pérdidas económicas por liquidaciones.
+
 
 ---
 
-## Data y alcance del analisis
+## Data y alcance del análisis
 
-Para comprender este tema de manera práctica, estudiaremos datos reales provenientes de la [competencia M5 Forecasting](https://www.kaggle.com/competitions/m5-forecasting-accuracy/data). Específicamente, utilizaremos un subconjunto correspondiente al segundo trimestre de 2015 (Q2 2015), que abarca del 1 de abril al 30 de junio, para un total de 91 días.
+Para aterrizar este tema de forma práctica, utilizaremos datos reales provenientes de la [competencia M5 Forecasting](https://www.kaggle.com/competitions/m5-forecasting-accuracy/data). En particular, trabajaremos con un subconjunto correspondiente al **segundo trimestre de 2015 (Q2 2015)**, que cubre del **1 de abril al 30 de junio**, es decir, un total de **91 días de observación**.
 
-Nuestro conjunto de datos incluye 3.049 productos distribuidos en 10 sucursales, lo que representa aproximadamente 2,8 millones de registros de comportamiento de demanda.
+Este subconjunto incluye 3.049 productos distribuidos en 10 sucursales, lo que da un universo potencial de 30.490 combinaciones producto–sucursal. De ellas, cerca de 29 mil presentaron ventas durante el periodo de estudio, constituyendo las observaciones efectivas de demanda analizadas.
 
-Como se observa en el siguiente gráfico, las ventas agregadas totales se sitúan en torno a las 37.000 unidades diarias, con un rango que varía entre 28.000 y 49.000 unidades. Se identifican picos marcados que contrastan claramente con los valles en los niveles de venta.
+### Nivel agregado
+
+En el gráfico agregado se observa un patrón global con ventas diarias en torno a las **37 mil unidades**, con un rango que varía entre **28 y 49 mil unidades**. Los picos de alta venta contrastan fuertemente con los valles, reflejando la volatilidad en el consumo.
 
 ![Total Sales Pattern](total_sales.png)
 
-Al observar la demanda a un nivel más atómico, se evidencia que las ventas se concentran principalmente en 1 o 2 unidades, con una clara predominancia de ventas de una sola unidad. Se identifican múltiples periodos con ventas nulas, lo que demuestra que la demanda no se manifiesta de forma continua. Cuando se presenta, su magnitud promedio se mantiene dentro de un rango reducido.
+![alt text](image-13.png)
 
-![Item-Level Sales Distribution](item_sales.png)
+![alt text](image-12.png)
 
-Este patrón corresponde a una demanda intermitente, descrita por primera vez por John Croston en su obra seminal de 1972, "Forecasting and Stock Control for Intermittent Demands."
+### Nivel atómico
+
+Sin embargo, cuando descendemos al nivel más atómico —el ítem individual por sucursal— la realidad cambia drásticamente. Las ventas se concentran casi siempre en **1 o 2 unidades**, predominando los casos de venta única. Además, aparecen múltiples periodos sin ventas, lo que evidencia que la demanda no se manifiesta de forma continua. Cuando surge, su magnitud promedio se mantiene dentro de un rango reducido.
+
+![alt text](image-14.png)
+
+Este contraste es revelador: mientras que en el nivel agregado las ventas parecen seguir un patrón relativamente estable y predecible, al descender al nivel más atómico lo que emerge es un panorama fragmentado y errático. Las series individuales muestran largos periodos sin ventas y, cuando estas ocurren, se concentran casi siempre en 1 o 2 unidades.
+
+En otras palabras, lo que en lo agregado luce como un flujo ordenado se descompone, en la base, en un mosaico de microeventos discontinuos. Este comportamiento es precisamente lo que define la demanda intermitente, caracterizada formalmente por John Croston (1972) en su obra seminal Forecasting and Stock Control for Intermittent Demands.
 
 ---
 ## Metodologia
 
 ### a) Resumen de estadisticas de ventas a nivel item-store
 
-**Nota técnica:** Para el análisis a gran escala, utilizamos DuckDB, lo que nos permitió consultar eficientemente un conjunto de datos con millones de registros sin necesidad de cargarlo completamente en memoria. Este enfoque permite escalar de manera fluida al procesar datos de años completos que abarcan miles de productos y tiendas.
+***Nota técnica:*** *Para el análisis a gran escala, utilizamos DuckDB, lo que nos permitió consultar eficientemente un conjunto de datos con millones de registros sin necesidad de cargarlo completamente en memoria. Este enfoque permite escalar de manera fluida al procesar datos de años completos que abarcan miles de productos y tiendas.*
 
 ```python
 import pandas as pd
@@ -117,17 +146,6 @@ demand_summary = con.query(query).to_df()
 ADI = \frac{\text{Number of Periods}}{\text{Number of Periods with Demand}}
 \]
 
-
-**Fórmula en nuestro análisis (adaptación operativa):**
-
-\[
-ADI = \frac{\text{sales\_window\_days}}{\text{selling\_days}}
-\]
-
-***Donde:***
-  - **sales_window_days**: días transcurridos entre la primera y la última venta registrada.  
-  - **selling_days**: número de días con ventas mayores a cero.  
-
 **Interpretación:** mide el intervalo promedio (en días) entre ocurrencias de ventas positivas.
 
   - ***ADI bajo*** → demanda frecuente (más cercana a continua).  
@@ -137,7 +155,7 @@ ADI = \frac{\text{sales\_window\_days}}{\text{selling\_days}}
 
 ```python
 demand_summary["ADI"] = (
-    demand_summary["sales_window_days"] / demand_summary["selling_days"]
+    91 / demand_summary["selling_days"]
 )
 ```
 
@@ -169,18 +187,22 @@ demand_summary["CV2"] = (
 
 ---
 
-#### Reglas de Clasificación (Syntetos & Boylan, 2005)
+#### Reglas de clasificación (Syntetos & Boylan, 2005)
 
-- **Suave (Smooth)**: ADI < 1.32 y CV² < 0.49 (frecuente, estable)  
-- **Intermitente (Intermittent)**: ADI ≥ 1.32 y CV² < 0.49 (esporádica, estable)  
-- **Errática (Erratic)**: ADI < 1.32 y CV² ≥ 0.49 (frecuente, volátil)  
-- **Irregular / Lumpy (Lumpy)**: ADI ≥ 1.32 y CV² ≥ 0.49 (esporádica, volátil)  
+| Clasificación | Descripción |
+|---------------|-------------|
+| **Suave (Smooth)** | <div align="center">Frecuente y estable<br>ADI < 1.32 y CV² < 0.49</div> |
+| **Intermitente (Intermittent)** | <div align="center">Esporádica pero estable<br>ADI ≥ 1.32 y CV² < 0.49</div> |
+| **Errática (Erratic)** | <div align="center">Frecuente pero volátil<br>ADI < 1.32 y CV² ≥ 0.49</div> |
+| **Irregular / Lumpy (Lumpy)** | <div align="center">Esporádica y volátil<br>ADI ≥ 1.32 y CV² ≥ 0.49</div> |
+
 
 
 **Implementación en código:**
 
 ```python
-def classify_demand(df):
+def classify_demand(df,
+                    horizon_days=91):
     """
     Classify each item into a demand type following Syntetos & Boylan (2005).
 
@@ -196,10 +218,8 @@ def classify_demand(df):
     CV2_THR = 0.49
 
     # Compute demand metrics
-    df["ADI"] = (df["sales_window_days"] / df["selling_days"]).round(3)
+    df["ADI"] = (horizon_days / df["selling_days"]).round(3)
     df["CV2"] = ((df["std_sales"] / df["avg_sales"]) ** 2).round(3)
-
-     # * Round 3 decimal for memory when we have millions time series
 
     # Classification rules
     conditions = [
@@ -219,19 +239,21 @@ def classify_demand(df):
 ---
 #### Manejo de datos insuficientes
 
-Los ítems con ventanas de ventas **menores al 20 % de la ventana máxima observada** se etiquetan como ***"Insufficient data"***, con el fin de evitar clasificaciones poco representativas.
+Los ítems con ventanas de ventas **menores al 20 % del total del periodo de estudio (91 días)** se etiquetan como ***"Insufficient data"***, con el fin de evitar clasificaciones poco representativas.
 
 **Implementación en código:**
 
 ```python    
-def tag_insufficient_data(df, ratio=0.2):
+def tag_insufficient_data(df,
+                          ratio=0.2,
+                          horizon_days=91):
     """
     Tag items as 'Insufficient data' when their sales history 
     is too short to provide reliable classification.
     """
 
     # Threshold: % of the maximum observed sales window
-    sales_threshold = int(df['sales_window_days'].max() * ratio)
+    sales_threshold = horizon_days * ratio
     
     # Relabel demand_type for items below threshold
     df['demand_type'] = np.where(
@@ -248,23 +270,23 @@ def tag_insufficient_data(df, ratio=0.2):
 
 ### a) Estadisticas generales
 
-**Intermittent demand dominates**: 71% of item-store combinations exhibit intermittent patterns, selling an average of 1.6 units every 4 days during the analyzed period.
+**Intermittent demand dominates**: 73% of item-store combinations exhibit intermittent patterns, selling an average of 1.6 units every 4 days during the analyzed period.
 
-![Distribution of Demand Patterns](distribution_demand_patterns.png)
+![alt text](image-15.png)
 
 The remaining portfolio distributes as follows:
-- Smooth: 14%
-- Lumpy: 9%
+- Smooth: 12%
+- Lumpy: 10%
 - Erratic: 3%
 - Insufficient data: 3%
 
 **Key portfolio metrics**:
 
-![Average Sales Window by Demand Type](average_windows.png)
+![alt text](image-16.png)
 
-![Average Demand Interval Distribution](adi.png)
+![alt text](image-17.png)
 
-![Average Sales per Occurrence](average_sales.png)
+![alt text](image-18.png)
 
 ### b) Visual Examples
 
@@ -318,7 +340,7 @@ Now let's see how these patterns look graphically. Each demand type has distinct
 
 Having characterized the portfolio gives us a solid foundation: we know how demand behaves. The next challenge is to anticipate it. But, as with this analysis, before applying any forecasting model—whether statistical, machine learning, or deep learning—it is essential to understand which metrics we will use and their limitations.
 
-Only then can we evaluate whether a model truly responds to business needs, beyond its mathematical precision. Classification helps choose appropriate forecasting models, explains why metrics like MAPE fail for intermittent patterns, and points toward better alternatives like MAPE, RMSE, or MAE that properly handle the realities of sporadic demand.
+Only then can we evaluate whether a model truly responds to business needs, beyond its mathematical precision. Classification helps choose appropriate forecasting models, explains why metrics like MAPE fail for intermittent patterns, and points toward better alternatives like RMSE or MAE that properly handle the realities of sporadic demand.
 
 ## Next Steps
 
